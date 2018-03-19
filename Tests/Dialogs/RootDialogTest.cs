@@ -14,7 +14,7 @@ namespace Blog.Tests.Dialogs
         [TestMethod]
         public async Task Bot_Test_Texto()
         {
-            foreach (var item in RootDialog.data)
+            foreach (var item in RootDialog.dataText)
             {
                 var preg = item.Key;
                 var resp = item.Value;
@@ -71,75 +71,63 @@ namespace Blog.Tests.Dialogs
             }
         }
 
-        [TestMethod]
-        public async Task Bot_Test_Attachments()
-        {
-            foreach (var item in RootDialog.data)
-            {
-                var preg = item.Key;
-                var resp = item.Value;
+        //[TestMethod]
+        //public async Task Bot_Test_Attachments()
+        //{
+        //    foreach (var item in RootDialog.dataAttachments)
+        //    {
+        //        var preg = item.Key;
+        //        var att = item.Value as Attachment;
 
-                using (ShimsContext.Create())
-                {
-                    // Arrange
-                    var waitCalled = false;
-                    var message = string.Empty;
+        //        using (ShimsContext.Create())
+        //        {
+        //            // Arrange
+        //            var waitCalled = false;
+        //            var message = string.Empty;
 
-                    var target = new RootDialog();
+        //            var target = new RootDialog();
 
-                    List<Attachment> attachments = new List<Attachment>();
+        //            var activity = new Activity(ActivityTypes.Message)
+        //            {
+        //                Text = preg
+        //            };
 
-                    Attachment a = new Attachment()
-                    {
-                        ContentUrl = "https://upload.wikimedia.org/wikipedia/en/a/a6/Bender_Rodriguez.png",
-                        ContentType = "image/png",
-                        Name = "Bender_Rodriguez.png"
-                    };
+        //            var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
+        //            {
+        //                IsCompletedGet = () => true,
+        //                GetResult = () => activity
+        //            };
 
-                    attachments.Add(a);
+        //            var awaitable = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIAwaitable<IMessageActivity>()
+        //            {
+        //                GetAwaiter = () => awaiter
+        //            };
 
-                    var activity = new Activity(ActivityTypes.Message)
-                    {
-                        Text = preg,
-                        Attachments = attachments
-                    };
+        //            var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
 
-                    var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
-                    {
-                        IsCompletedGet = () => true,
-                        GetResult = () => activity
-                    };
+        //            Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.PostAsyncIBotToUserStringStringCancellationToken = (user, s1, s2, token) =>
+        //            {
+        //                message = s1;
+        //                return Task.CompletedTask;
+        //            };
 
-                    var awaitable = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIAwaitable<IMessageActivity>()
-                    {
-                        GetAwaiter = () => awaiter
-                    };
+        //            Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
+        //            {
+        //                if (waitCalled) return;
 
-                    var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
+        //                waitCalled = true;
 
-                    Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.PostAsyncIBotToUserStringStringCancellationToken = (user, s1, s2, token) =>
-                    {
-                        message = s1;
-                        return Task.CompletedTask;
-                    };
+        //                // The callback is what is being tested.
+        //                callback(context, awaitable);
+        //            };
 
-                    Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
-                    {
-                        if (waitCalled) return;
+        //            // Act
+        //            await target.StartAsync(context);
 
-                        waitCalled = true;
-
-                        // The callback is what is being tested.
-                        callback(context, awaitable);
-                    };
-
-                    // Act
-                    await target.StartAsync(context);
-
-                    // Assert
-                    Assert.AreEqual(resp, message);
-                }
-            }
-        }
+        //            // Assert
+        //            Assert.AreEqual(resp, message);
+        //        }
+        //    }
+        //}
     }
 }
