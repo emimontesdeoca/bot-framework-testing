@@ -12,9 +12,9 @@ namespace Blog.Tests.Dialogs
     public class RootDialogTests
     {
         [TestMethod]
-        public async Task Bot_Test_Texto()
+        public async Task Bot_Test_Generico()
         {
-            foreach (var item in RootDialog.dataText)
+            foreach (var item in RootDialog.data)
             {
                 var preg = item.Key;
                 var resp = item.Value;
@@ -29,8 +29,7 @@ namespace Blog.Tests.Dialogs
 
                     var activity = new Activity(ActivityTypes.Message)
                     {
-                        Text = preg,
-
+                        Text = preg as string
                     };
 
                     var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
@@ -48,6 +47,7 @@ namespace Blog.Tests.Dialogs
 
                     Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.PostAsyncIBotToUserStringStringCancellationToken = (user, s1, s2, token) =>
                     {
+
                         message = s1;
                         return Task.CompletedTask;
                     };
@@ -64,6 +64,7 @@ namespace Blog.Tests.Dialogs
 
                     // Act
                     await target.StartAsync(context);
+
 
                     // Assert
                     Assert.AreEqual(resp, message);
