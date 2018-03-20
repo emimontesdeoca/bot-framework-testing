@@ -32,7 +32,7 @@ namespace Blog.Tests.Dialogs
 
                     var activity = new Activity(ActivityTypes.Message)
                     {
-                        Text = preg
+                        Text = preg as string
                     };
 
                     var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
@@ -69,11 +69,13 @@ namespace Blog.Tests.Dialogs
                     //await target.StartAsync(context);
                     await target.MessageReceivedWithTextAsync(context, awaitable);
 
+
                     // Assert
                     Assert.AreEqual(resp, message);
                 }
             }
         }
+
 
         [TestMethod]
         public async Task TestShouldReturnErrorIfEmptyOrSpaces()
@@ -258,5 +260,6 @@ namespace Blog.Tests.Dialogs
                 }
             }
         }
+
     }
 }
