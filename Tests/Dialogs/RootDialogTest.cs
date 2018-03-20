@@ -253,7 +253,7 @@ namespace Blog.Tests.Dialogs
 
                     // Act
                     // await target.StartAsync(context);
-                    await target.MessageReceivedWithAttachmentAsync(context, awaitable);
+                    await target.MessageReceivedWithTextAsync(context, awaitable);
 
                     // Assert
                     Assert.AreEqual(att, message);

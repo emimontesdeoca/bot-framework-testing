@@ -11,11 +11,7 @@ namespace TestBot.Dialogs
     [Serializable]
     public class RootDialog : IDialog<object>
     {
-<<<<<<< HEAD
         public static Dictionary<string, string> dataText = new Dictionary<string, string>{
-=======
-        public static Dictionary<string, object> data = new Dictionary<string, object>{
->>>>>>> a7c3674e42b54568d5e639592db849554b06ed9b
             {"Nuevo", "Que quieres crear?"},
             {"Ayuda", "Ya te ayudamos!"},
             {"Adios", "Nos vemos!"}
@@ -50,7 +46,7 @@ namespace TestBot.Dialogs
 
         public Task StartAsync(IDialogContext context)
         {
-            context.Wait(MessageReceivedWithAttachmentAsync);
+            context.Wait(MessageReceivedWithTextAsync);
 
             return Task.CompletedTask;
         }
@@ -59,7 +55,6 @@ namespace TestBot.Dialogs
         {
             var activity = await result as Activity;
 
-<<<<<<< HEAD
             string r = "";
 
             foreach (var item in dataText)
@@ -82,76 +77,5 @@ namespace TestBot.Dialogs
             //context.Wait(MessageReceivedWithTextAsync);
         }
 
-        public async Task MessageReceivedWithAttachmentAsync(IDialogContext context, IAwaitable<IMessageActivity> result)
-        {
-            var activity = await result as Activity;
-
-            var r = context.MakeMessage();
-
-            foreach (var item in dataAtt)
-            {
-                if (item.Key == activity.Text)
-                {
-                    r.Attachments.Add(item.Value as Attachment);
-=======
-            var r = context.MakeMessage();
-            string s = "";
-            foreach (var item in data)
-            {
-                if (item.Key == activity.Text)
-                {
-                    if (item.Value is Attachment)
-                    {
-                        r.Attachments = new List<Attachment>() { item.Value as Attachment };
-                    }
-                    if (item.Value is string)
-                    {
-                        s = item.Value.ToString();
-                    }
-
->>>>>>> a7c3674e42b54568d5e639592db849554b06ed9b
-                    break;
-                }
-            }
-
-<<<<<<< HEAD
-
-            // return our reply to the user
-            await context.PostAsync(r);
-=======
-            if (r != null)
-            {
-                await context.PostAsync(s);
-            }
-            else
-            {
-                await context.PostAsync(r);
-            }
-            // return our reply to the user
->>>>>>> a7c3674e42b54568d5e639592db849554b06ed9b
-
-            context.Wait(MessageReceivedWithAttachmentAsync);
-        }
-
-        //private async Task MessageReceivedReturnAttachmentAsync(IDialogContext context, IAwaitable<object> result)
-        //{
-        //    var activity = await result as Activity;
-
-        //    var r = context.MakeMessage();
-
-        //    foreach (var item in dataAttachments)
-        //    {
-        //        if (item.Key == activity.Text)
-        //        {
-        //            r.Attachments = new List<Attachment>() { item.Value as Attachment };
-        //            break;
-        //        }
-        //    }
-
-        //    // return our reply to the user
-        //    await context.PostAsync(r);
-
-        //    context.Wait(MessageReceivedReturnAttachmentAsync);
-        //}
     }
 }
