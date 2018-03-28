@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
@@ -66,15 +66,25 @@ namespace TestBot.Dialogs
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(r) || r == null)
+            var reply = activity.CreateReply(r);
+            foreach (var item in dataAtt)
             {
-                r = "No tengo respuesta para eso.";
+                if (item.Key == activity.Text)
+                {
+                    reply.Attachments.Add(item.Value);
+                    reply.Text = "attachment";
+                    break;
+                }
             }
 
-            // return our reply to the user
-            await context.PostAsync(r);
+            if ((string.IsNullOrWhiteSpace(r) || r == null) && reply.Attachments.Count == 0)
+            {
+                reply.Text = "No tengo respuesta para eso.";
+            }
 
-            //context.Wait(MessageReceivedWithTextAsync);
+
+            // return our reply to the user
+            await context.PostAsync(reply);
         }
 
     }
