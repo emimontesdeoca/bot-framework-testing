@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 using Microsoft.QualityTools.Testing.Fakes;
@@ -26,13 +26,16 @@ namespace Blog.Tests.Dialogs
                 {
                     // Arrange
                     var waitCalled = false;
-                    var message = string.Empty;
+                    IMessageActivity message = null;
 
                     var target = new RootDialog();
 
                     var activity = new Activity(ActivityTypes.Message)
                     {
-                        Text = preg as string
+                        Text = preg as string,
+                        From = new ChannelAccount("id", "name"),
+                        Recipient = new ChannelAccount("recipid", "recipname"),
+                        Conversation = new ConversationAccount(false, "id", "name")
                     };
 
                     var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
@@ -48,13 +51,10 @@ namespace Blog.Tests.Dialogs
 
                     var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
 
-                    Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.PostAsyncIBotToUserStringStringCancellationToken = (user, s1, s2, token) =>
-                    {
-
-                        message = s1;
+                    context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) => {
+                        message = messageActivity;
                         return Task.CompletedTask;
                     };
-
                     Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
                     {
                         if (waitCalled) return;
@@ -68,10 +68,9 @@ namespace Blog.Tests.Dialogs
                     // Act
                     //await target.StartAsync(context);
                     await target.MessageReceivedWithTextAsync(context, awaitable);
-
-
+                    
                     // Assert
-                    Assert.AreEqual(resp, message);
+                    Assert.AreEqual(resp, message.Text);
                 }
             }
         }
@@ -90,13 +89,16 @@ namespace Blog.Tests.Dialogs
                 {
                     // Arrange
                     var waitCalled = false;
-                    var message = string.Empty;
+                    IMessageActivity message = null;
 
                     var target = new RootDialog();
 
                     var activity = new Activity(ActivityTypes.Message)
                     {
-                        Text = preg
+                        Text = preg,
+                        From = new ChannelAccount("id", "name"),
+                        Recipient = new ChannelAccount("recipid", "recipname"),
+                        Conversation = new ConversationAccount(false, "id", "name")
                     };
 
                     var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
@@ -111,13 +113,11 @@ namespace Blog.Tests.Dialogs
                     };
 
                     var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
-
-                    Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.PostAsyncIBotToUserStringStringCancellationToken = (user, s1, s2, token) =>
-                    {
-
-                        message = s1;
+                    context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token)=> {
+                        message = messageActivity;
                         return Task.CompletedTask;
                     };
+
 
                     Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
                     {
@@ -134,7 +134,7 @@ namespace Blog.Tests.Dialogs
                     await target.MessageReceivedWithTextAsync(context, awaitable);
 
                     // Assert
-                    Assert.AreEqual(message, errorMessage);
+                    Assert.AreEqual(message.Text, errorMessage);
                 }
             }
         }
@@ -152,13 +152,16 @@ namespace Blog.Tests.Dialogs
                 {
                     // Arrange
                     var waitCalled = false;
-                    var message = string.Empty;
+                    IMessageActivity message = null;
 
                     var target = new RootDialog();
 
                     var activity = new Activity(ActivityTypes.Message)
                     {
-                        Text = preg
+                        Text = preg,
+                        From = new ChannelAccount("id", "name"),
+                        Recipient = new ChannelAccount("recipid", "recipname"),
+                        Conversation = new ConversationAccount(false, "id", "name")
                     };
 
                     var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
@@ -174,10 +177,8 @@ namespace Blog.Tests.Dialogs
 
                     var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
 
-                    Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.PostAsyncIBotToUserStringStringCancellationToken = (user, s1, s2, token) =>
-                    {
-
-                        message = s1;
+                    context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) => {
+                        message = messageActivity;
                         return Task.CompletedTask;
                     };
 
@@ -196,70 +197,65 @@ namespace Blog.Tests.Dialogs
                     await target.MessageReceivedWithTextAsync(context, awaitable);
 
                     // Assert
-                    Assert.AreEqual(message, errorMessage);
+                    Assert.AreEqual(message.Text, errorMessage);
                 }
             }
         }
 
-        [TestMethod]
-        public async Task Bot_Test_Attachments()
+    [TestMethod]
+    public async Task Bot_Test_Attachments()
+    {
+        foreach (var item in RootDialog.dataAtt)
         {
-            foreach (var item in RootDialog.dataAtt)
+            var preg = item.Key;
+            var att = item.Value;
+
+            using (ShimsContext.Create())
             {
-                var preg = item.Key;
-                var att = item.Value;
+                var waitCalled = false;
+                IMessageActivity message = null;
 
-                using (ShimsContext.Create())
+                var target = new RootDialog();
+                    
+                var activity = new Activity(ActivityTypes.Message)
                 {
-                    // Arrange
-                    var waitCalled = false;
-                    var message = new object();
+                    Text = preg,
+                    From = new ChannelAccount("id","name"),
+                    Recipient = new ChannelAccount("recipid","recipname"),
+                    Conversation = new ConversationAccount(false,"id","name")
+                };
 
-                    var target = new RootDialog();
+                var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
+                {
+                    IsCompletedGet = () => true,
+                    GetResult = () => activity
+                };
 
-                    var activity = new Activity(ActivityTypes.Message)
-                    {
-                        Text = preg
-                    };
+                var awaitable = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIAwaitable<IMessageActivity>()
+                {
+                    GetAwaiter = () => awaiter
+                };
 
-                    var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
-                    {
-                        IsCompletedGet = () => true,
-                        GetResult = () => activity
-                    };
+                var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
 
-                    var awaitable = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIAwaitable<IMessageActivity>()
-                    {
-                        GetAwaiter = () => awaiter
-                    };
+                context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) => {
+                    message = messageActivity;
+                    return Task.CompletedTask;
+                };
 
-                    var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
+                Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
+                {
+                    if (waitCalled) return;
+                    waitCalled = true;                        
+                    callback(context, awaitable);
+                };
+                await target.MessageReceivedWithTextAsync(context, awaitable);
 
-                    Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.PostAsyncIBotToUserStringStringCancellationToken = (user, s1, s2, token) =>
-                    {
-                        message = s1;
-                        return Task.CompletedTask;
-                    };
 
-                    Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
-                    {
-                        if (waitCalled) return;
-
-                        waitCalled = true;
-
-                        // The callback is what is being tested.
-                        callback(context, awaitable);
-                    };
-
-                    // Act
-                    // await target.StartAsync(context);
-                    await target.MessageReceivedWithTextAsync(context, awaitable);
-
-                    // Assert
-                    Assert.AreEqual(att, message);
-                }
+                Assert.AreEqual(att, message.Attachments[0]);
             }
         }
+    }
 
     }
 }
