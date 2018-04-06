@@ -6,6 +6,8 @@ using TestBot.Dialogs;
 using Microsoft.Bot.Connector;
 using System.Collections.Generic;
 using Microsoft.Bot.Builder.Dialogs.Fakes;
+using System.Linq;
+using Newtonsoft.Json;
 
 namespace Blog.Tests.Dialogs
 {
@@ -19,8 +21,8 @@ namespace Blog.Tests.Dialogs
         {
             foreach (var item in RootDialog.dataText)
             {
-                var preg = item.Key;
-                var resp = item.Value;
+                var question = item.Key;
+                var expectedResult = item.Value;
 
                 using (ShimsContext.Create())
                 {
@@ -32,7 +34,7 @@ namespace Blog.Tests.Dialogs
 
                     var activity = new Activity(ActivityTypes.Message)
                     {
-                        Text = preg as string,
+                        Text = question as string,
                         From = new ChannelAccount("id", "name"),
                         Recipient = new ChannelAccount("recipid", "recipname"),
                         Conversation = new ConversationAccount(false, "id", "name")
@@ -51,10 +53,12 @@ namespace Blog.Tests.Dialogs
 
                     var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
 
-                    context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) => {
+                    context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) =>
+                    {
                         message = messageActivity;
                         return Task.CompletedTask;
                     };
+
                     Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
                     {
                         if (waitCalled) return;
@@ -68,9 +72,11 @@ namespace Blog.Tests.Dialogs
                     // Act
                     //await target.StartAsync(context);
                     await target.MessageReceivedWithTextAsync(context, awaitable);
-                    
+
+
+
                     // Assert
-                    Assert.AreEqual(resp, message.Text);
+                    Assert.AreEqual(expectedResult, message.Text);
                 }
             }
         }
@@ -79,11 +85,11 @@ namespace Blog.Tests.Dialogs
         [TestMethod]
         public async Task TestShouldReturnErrorIfEmptyOrSpaces()
         {
-            List<string> strings = new List<string>() { "", "      ", null };
+            List<string> strings = new List<string>() { "", "      " };
 
             foreach (var item in strings)
             {
-                var preg = item;
+                var question = item;
 
                 using (ShimsContext.Create())
                 {
@@ -95,7 +101,7 @@ namespace Blog.Tests.Dialogs
 
                     var activity = new Activity(ActivityTypes.Message)
                     {
-                        Text = preg,
+                        Text = question,
                         From = new ChannelAccount("id", "name"),
                         Recipient = new ChannelAccount("recipid", "recipname"),
                         Conversation = new ConversationAccount(false, "id", "name")
@@ -113,11 +119,12 @@ namespace Blog.Tests.Dialogs
                     };
 
                     var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
-                    context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token)=> {
+
+                    context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) =>
+                    {
                         message = messageActivity;
                         return Task.CompletedTask;
                     };
-
 
                     Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
                     {
@@ -146,7 +153,7 @@ namespace Blog.Tests.Dialogs
 
             foreach (var item in strings)
             {
-                var preg = item;
+                var question = item;
 
                 using (ShimsContext.Create())
                 {
@@ -158,7 +165,7 @@ namespace Blog.Tests.Dialogs
 
                     var activity = new Activity(ActivityTypes.Message)
                     {
-                        Text = preg,
+                        Text = question,
                         From = new ChannelAccount("id", "name"),
                         Recipient = new ChannelAccount("recipid", "recipname"),
                         Conversation = new ConversationAccount(false, "id", "name")
@@ -177,7 +184,8 @@ namespace Blog.Tests.Dialogs
 
                     var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
 
-                    context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) => {
+                    context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) =>
+                    {
                         message = messageActivity;
                         return Task.CompletedTask;
                     };
@@ -202,13 +210,89 @@ namespace Blog.Tests.Dialogs
             }
         }
 
-    [TestMethod]
-    public async Task Bot_Test_Attachments()
-    {
-        foreach (var item in RootDialog.dataAtt)
+        [TestMethod]
+        public async Task TestShouldReturnAttachment()
         {
-            var preg = item.Key;
-            var att = item.Value;
+            foreach (var item in RootDialog.dataAtt)
+            {
+                var question = item.Key;
+                var expectedAttachment = item.Value;
+
+                using (ShimsContext.Create())
+                {
+                    var waitCalled = false;
+                    IMessageActivity message = null;
+
+                    var target = new RootDialog();
+
+                    var activity = new Activity(ActivityTypes.Message)
+                    {
+                        Text = question,
+                        From = new ChannelAccount("id", "name"),
+                        Recipient = new ChannelAccount("recipid", "recipname"),
+                        Conversation = new ConversationAccount(false, "id", "name")
+                    };
+
+                    var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
+                    {
+                        IsCompletedGet = () => true,
+                        GetResult = () => activity
+                    };
+
+                    var awaitable = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIAwaitable<IMessageActivity>()
+                    {
+                        GetAwaiter = () => awaiter
+                    };
+
+                    var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
+
+                    context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) =>
+                    {
+                        message = messageActivity;
+                        return Task.CompletedTask;
+                    };
+
+                    Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
+                    {
+                        if (waitCalled) return;
+                        waitCalled = true;
+                        callback(context, awaitable);
+                    };
+                    await target.MessageReceivedWithTextAsync(context, awaitable);
+
+
+                    Assert.AreEqual(expectedAttachment, message.Attachments[0]);
+                }
+            }
+        }
+
+
+        [TestMethod]
+        public async Task TestShouldReturnTenerifeNumberFlow()
+        {
+            var choice1 = "ayuda";
+            var expectedResultChoice1 = "Necesitas ayuda?";
+
+            var choice2 = "telefono";
+            var expectedResultChoice2 = "Que telefono quieres?";
+
+            var choice3 = "oficina";
+            var expectedResultChoice3 = "Que oficina quieres llamar?";
+
+            var choice4 = "Tenerife";
+            var expectedResultChoice4 = "922920252";
+
+
+            Dictionary<string, string> keyValuePairs = new Dictionary<string, string>();
+
+            keyValuePairs.Add(choice1, expectedResultChoice1);
+            keyValuePairs.Add(choice2, expectedResultChoice2);
+            keyValuePairs.Add(choice3, expectedResultChoice3);
+            keyValuePairs.Add(choice4, expectedResultChoice4);
+
+            List<string> choices = new List<string>() { "" };
+
+
 
             using (ShimsContext.Create())
             {
@@ -216,19 +300,20 @@ namespace Blog.Tests.Dialogs
                 IMessageActivity message = null;
 
                 var target = new RootDialog();
-                    
+                int i = 0;
                 var activity = new Activity(ActivityTypes.Message)
                 {
-                    Text = preg,
-                    From = new ChannelAccount("id","name"),
-                    Recipient = new ChannelAccount("recipid","recipname"),
-                    Conversation = new ConversationAccount(false,"id","name")
+                    Text = choice1,
+                    From = new ChannelAccount("id", "name"),
+                    Recipient = new ChannelAccount("recipid", "recipname"),
+                    Conversation = new ConversationAccount(false, "id", "name")
                 };
 
                 var awaiter = new Microsoft.Bot.Builder.Internals.Fibers.Fakes.StubIAwaiter<IMessageActivity>()
                 {
                     IsCompletedGet = () => true,
                     GetResult = () => activity
+
                 };
 
                 var awaitable = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIAwaitable<IMessageActivity>()
@@ -238,24 +323,38 @@ namespace Blog.Tests.Dialogs
 
                 var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
 
-                context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) => {
-                    message = messageActivity;
+                context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) =>
+                {
+                    message = messageActivity as Activity;
+
+                    if (message.Attachments.Count > 0)
+                    {
+                        Assert.AreEqual(keyValuePairs.ElementAt(i).Value, message.Attachments[0].Name);
+                    }
+                    else
+                    {
+                        Assert.AreEqual(keyValuePairs.ElementAt(i).Value, message.Text);
+                    }
                     return Task.CompletedTask;
                 };
 
                 Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
                 {
+                    i++;
                     if (waitCalled) return;
-                    waitCalled = true;                        
+                    waitCalled = true;
+
+                    activity.Text = keyValuePairs.ElementAt(i).Key;
+                    var a = awaitable;
+
                     callback(context, awaitable);
                 };
+
                 await target.MessageReceivedWithTextAsync(context, awaitable);
 
+                //Assert.AreEqual(expecteResultChoice1, message.Attachments[0].Content);
 
-                Assert.AreEqual(att, message.Attachments[0]);
             }
         }
-    }
-
     }
 }
