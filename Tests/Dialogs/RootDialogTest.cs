@@ -15,13 +15,19 @@ namespace Blog.Tests.Dialogs
     public class RootDialogTests
     {
         string errorMessage = "No tengo respuesta para eso.";
-
+        /// <summary>
+        /// Test that should return correct text
+        /// </summary>
+        /// <returns></returns>
         [TestMethod]
         public async Task TestShouldReturnText()
         {
+            /// All text
             foreach (var item in RootDialog.dataText)
             {
+                /// Text to the bot
                 var question = item.Key;
+                /// Expected result
                 var expectedResult = item.Value;
 
                 using (ShimsContext.Create())
@@ -53,12 +59,14 @@ namespace Blog.Tests.Dialogs
 
                     var context = new Microsoft.Bot.Builder.Dialogs.Fakes.StubIDialogContext();
 
+                    /// Talk to bot with message
                     context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) =>
                     {
                         message = messageActivity;
                         return Task.CompletedTask;
                     };
 
+                    /// In case of wait, recall new awaitable
                     Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
                     {
                         if (waitCalled) return;
@@ -81,7 +89,10 @@ namespace Blog.Tests.Dialogs
             }
         }
 
-
+        /// <summary>
+        /// Test that should return the error message if null or spaces
+        /// </summary>
+        /// <returns></returns>
         [TestMethod]
         public async Task TestShouldReturnErrorIfEmptyOrSpaces()
         {
@@ -146,6 +157,10 @@ namespace Blog.Tests.Dialogs
             }
         }
 
+        /// <summary>
+        /// Test that should return the error message if text not found
+        /// </summary>
+        /// <returns></returns>
         [TestMethod]
         public async Task TestShouldReturnErrorIfTextNotFound()
         {
@@ -210,6 +225,10 @@ namespace Blog.Tests.Dialogs
             }
         }
 
+        /// <summary>
+        /// Test that should return an attachment
+        /// </summary>
+        /// <returns></returns>
         [TestMethod]
         public async Task TestShouldReturnAttachment()
         {
@@ -266,10 +285,17 @@ namespace Blog.Tests.Dialogs
             }
         }
 
-
+        /// <summary>
+        /// Test that should do some flow conversation
+        /// </summary>
+        /// <returns></returns>
         [TestMethod]
         public async Task TestShouldReturnTenerifeNumberFlow()
         {
+            /// Here are all the choices that we are going to make
+            /// The expected result is not the actual result that the activity
+            /// is returning, but the NAME that we gave to the herocard/attachment
+            /// this obviously needs improvement
             var choice1 = "ayuda";
             var expectedResultChoice1 = "Necesitas ayuda?";
 
@@ -282,7 +308,6 @@ namespace Blog.Tests.Dialogs
             var choice4 = "Tenerife";
             var expectedResultChoice4 = "922920252";
 
-
             Dictionary<string, string> keyValuePairs = new Dictionary<string, string>();
 
             keyValuePairs.Add(choice1, expectedResultChoice1);
@@ -290,19 +315,19 @@ namespace Blog.Tests.Dialogs
             keyValuePairs.Add(choice3, expectedResultChoice3);
             keyValuePairs.Add(choice4, expectedResultChoice4);
 
-            List<string> choices = new List<string>() { "" };
-
-
-
             using (ShimsContext.Create())
             {
                 var waitCalled = false;
                 IMessageActivity message = null;
 
                 var target = new RootDialog();
+
+                /// Counter for the choices
                 int i = 0;
+
                 var activity = new Activity(ActivityTypes.Message)
                 {
+                    /// Since we start we get the first choice, later we swap for the next one
                     Text = choice1,
                     From = new ChannelAccount("id", "name"),
                     Recipient = new ChannelAccount("recipid", "recipname"),
@@ -325,27 +350,37 @@ namespace Blog.Tests.Dialogs
 
                 context.PostAsyncIMessageActivityCancellationToken = (messageActivity, token) =>
                 {
+                    /// Get message as activity
                     message = messageActivity as Activity;
-
+                    /// If it does have an attachment, lets compare the name 
+                    /// THIS NEEDS TO BE FIXED SOMEHOW since it's not really useful
                     if (message.Attachments.Count > 0)
                     {
                         Assert.AreEqual(keyValuePairs.ElementAt(i).Value, message.Attachments[0].Name);
                     }
+                    /// If there are no attachments means we have to compare the text
                     else
                     {
                         Assert.AreEqual(keyValuePairs.ElementAt(i).Value, message.Text);
                     }
+
                     return Task.CompletedTask;
                 };
 
                 Microsoft.Bot.Builder.Dialogs.Fakes.ShimExtensions.WaitIDialogStackResumeAfterOfIMessageActivity = (stack, callback) =>
                 {
+                    /// When this is called, means there is a new activity in the same context
+                    /// Increment i to get the next question which is also useful to the assert 
+                    /// in the function above
                     i++;
+
                     if (waitCalled) return;
                     waitCalled = true;
 
+                    /// Set NEW text to ask
                     activity.Text = keyValuePairs.ElementAt(i).Key;
-                    var a = awaitable;
+
+                    //var a = awaitable;
 
                     callback(context, awaitable);
                 };

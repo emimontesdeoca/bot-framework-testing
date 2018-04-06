@@ -12,11 +12,17 @@ namespace TestBot.Dialogs
     [Serializable]
     public class RootDialog : IDialog<object>
     {
+        /// <summary>
+        /// Dictionary with strings
+        /// </summary>
         public static Dictionary<string, string> dataText = new Dictionary<string, string>{
             {"Nuevo", "Que quieres crear?"},
             {"Adios", "Nos vemos!"}
         };
 
+        /// <summary>
+        /// Dictionary with attachments
+        /// </summary>
         public static Dictionary<string, Attachment> dataAtt = new Dictionary<string, Attachment>{
             {
           "Coche",
@@ -51,22 +57,34 @@ namespace TestBot.Dialogs
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Manages the logic when user ask for help
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
         public async Task AfterAskingHelp(IDialogContext context, IAwaitable<object> result)
         {
+            /// Get current activity
             var activity = await result as Activity;
 
-            Activity reply = new Activity();
+            /// Reply
+            var reply = activity.CreateReply();
 
+            /// email
             if (activity.Text.ToString().ToLower().Contains("email"))
             {
                 reply.Text = "Has elegido email";
                 await context.PostAsync(reply);
 
             }
+            /// telefono
             else if (activity.Text.ToString().ToLower().Contains("telefono"))
             {
+                /// Card actions for hero card
                 List<CardAction> cardActions = new List<CardAction>();
 
+                /// buttons 
                 CardAction button1 = new CardAction()
                 {
                     Type = "imBack",
@@ -90,18 +108,27 @@ namespace TestBot.Dialogs
                 cardActions.Add(button2);
                 cardActions.Add(button3);
 
+                /// Herocard
                 HeroCard h = new HeroCard();
+                /// Hero text
                 h.Text = "Que telefono quieres?";
+                /// Buttons
                 h.Buttons = cardActions;
 
-                var ac = activity.CreateReply("");
-
+                /// Set it as attachment
                 Attachment att = h.ToAttachment();
+
+                /// Set the name, this is not visible by the user but you can get it from the 
+                /// json, in the testing process we use it to assert with the expected one
                 att.Name = "Necesitas ayuda?";
 
-                ac.Attachments.Add(att);
+                /// Set attachments
+                reply.Attachments.Add(att);
 
-                await context.PostAsync(ac);
+                /// Post it
+                await context.PostAsync(reply);
+
+                /// Wait for response and callback
                 context.Wait(AfterAskingHelpTelefono);
             }
             else
@@ -113,14 +140,18 @@ namespace TestBot.Dialogs
 
         public async Task AfterAskingHelpTelefono(IDialogContext context, IAwaitable<object> result)
         {
+            /// Get current activity
             var activity = await result as Activity;
 
-            Activity reply = new Activity();
+            /// Reply
+            var reply = activity.CreateReply();
 
             if (activity.Text.ToString() == "Oficina")
             {
+                /// Card actions
                 List<CardAction> cardActions = new List<CardAction>();
 
+                /// Buttons
                 CardAction button = new CardAction()
                 {
                     Type = "imBack",
@@ -138,17 +169,28 @@ namespace TestBot.Dialogs
                 cardActions.Add(button);
                 cardActions.Add(button1);
 
+                /// Hero card
                 HeroCard h = new HeroCard();
+
+                /// Text
                 h.Text = "Que oficina quieres llamar?";
+
+                /// Buttons
                 h.Buttons = cardActions;
 
-                var ac = activity.CreateReply();
+                /// Attachments
                 Attachment att = h.ToAttachment();
+
+                /// Name, using it to assert in tests
                 att.Name = "Que oficina quieres llamar";
 
-                ac.Attachments.Add(att);
+                /// Set attachments
+                reply.Attachments.Add(att);
 
-                await context.PostAsync(ac);
+                ///Post
+                await context.PostAsync(reply);
+
+                /// Callback for next handler
                 context.Wait(AfterAskingHelpTelefonoLugar);
 
                 return;
@@ -169,8 +211,10 @@ namespace TestBot.Dialogs
 
         public async Task AfterAskingHelpTelefonoLugar(IDialogContext context, IAwaitable<object> activity)
         {
-
+            /// Get activity
             var result = await activity as Activity;
+
+            /// Return value
             string res = "";
 
             if (result.Text.ToString() == "Madrid")
@@ -189,24 +233,27 @@ namespace TestBot.Dialogs
 
         public async Task MessageReceivedWithTextAsync(IDialogContext context, IAwaitable<object> result)
         {
+            /// Get current activity
             var activity = await result as Activity;
 
+            /// Reply
             var reply = activity.CreateReply();
 
-            /// null or spaces
-            if ((string.IsNullOrWhiteSpace(activity.Text) || activity.Text == null) && reply.Attachments.Count == 0)
+            /// String is empty or spaces
+            if (string.IsNullOrWhiteSpace(activity.Text) || activity.Text == null)
             {
                 reply.Text = "No tengo respuesta para eso.";
                 await context.PostAsync(reply);
                 return;
             }
 
-            /// help
+            /// Help case
             if (activity.Text.ToLower().Contains("ayuda"))
             {
-                //PromptDialog.PromptChoice<string> a = new PromptDialog.PromptChoice<string>(new List<string>() { "Email", "Persona", "Telefono" }, "Necesitas ayuda?", "", 3, promptStyle: PromptStyle.Auto);
+                /// Actions
                 List<CardAction> cardActions = new List<CardAction>();
 
+                /// Cardaction
                 CardAction button = new CardAction()
                 {
                     Type = "imBack",
@@ -216,8 +263,13 @@ namespace TestBot.Dialogs
 
                 cardActions.Add(button);
 
+                /// Herocard 
                 HeroCard h = new HeroCard();
+
+                /// Text
                 h.Text = "Necesitas ayuda?";
+
+                /// Buttons
                 h.Buttons = cardActions;
 
                 var ac = activity.CreateReply();
@@ -226,7 +278,10 @@ namespace TestBot.Dialogs
 
                 ac.Attachments.Add(att);
 
+                /// Post
                 await context.PostAsync(ac);
+
+                /// Handler
                 context.Wait(AfterAskingHelp);
 
                 return;
@@ -252,6 +307,7 @@ namespace TestBot.Dialogs
                 }
             }
 
+            /// No answer
             if (reply.Text == "" && reply.Attachments.Count == 0)
             {
                 reply.Text = "No tengo respuesta para eso.";
